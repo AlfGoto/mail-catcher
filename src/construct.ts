@@ -67,7 +67,7 @@ export default class MailCatcher extends Construct {
     })
 
     const testQueue = new sqs.Queue(this, "MailCatcherQueue", {
-      visibilityTimeout: Duration.seconds(30),
+      visibilityTimeout: Duration.seconds(10),
       retentionPeriod: Duration.days(1),
     })
 

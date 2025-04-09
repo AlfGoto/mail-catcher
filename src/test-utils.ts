@@ -39,15 +39,14 @@ export default async function waitForMailEvent<T extends boolean = false>(
 
     if (res.Messages?.[0]) {
       const message = res.Messages[0]
-      await client.send(
-        new DeleteMessageCommand({
-          QueueUrl: queueUrl,
-          ReceiptHandle: message.ReceiptHandle!,
-        }),
-      )
-
       const parsed = JSON.parse(message.Body!)
       if (!options?.filter || options.filter(parsed)) {
+        await client.send(
+          new DeleteMessageCommand({
+            QueueUrl: queueUrl,
+            ReceiptHandle: message.ReceiptHandle!,
+          }),
+        )
         const json = JSON.parse(parsed.Message)
         if (options?.moreData) return json
         else return json.mail.commonHeaders
