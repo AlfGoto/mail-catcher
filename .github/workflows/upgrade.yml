@@ -35,7 +35,7 @@ jobs:
       - name: Get and set new version
         id: version
         run: |
-          LATEST_VERSION=$(npm show lowback version || echo "")
+          LATEST_VERSION=$(npm show mail-catcher version || echo "")
           echo "Current latest version: $LATEST_VERSION"
 
           if [ -z "$LATEST_VERSION" ]; then
