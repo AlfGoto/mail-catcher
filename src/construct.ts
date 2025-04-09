@@ -1,9 +1,7 @@
 import { Construct } from "constructs"
 import {
-  aws_s3 as s3,
   aws_sns as sns,
   aws_ses as ses,
-  aws_ses_actions as sesActions,
   aws_iam as iam,
   aws_sqs as sqs,
   aws_ssm as ssm,
@@ -11,7 +9,6 @@ import {
   Duration,
   Stack,
 } from "aws-cdk-lib"
-import * as cdk from "aws-cdk-lib"
 import * as cr from "aws-cdk-lib/custom-resources"
 import * as fs from "fs"
 import * as os from "os"

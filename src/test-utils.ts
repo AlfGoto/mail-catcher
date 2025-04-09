@@ -7,14 +7,11 @@ import { readFileSync } from "fs"
 import path from "path"
 import os from "os"
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm"
-import { Output } from "./types"
+import { Output, WaitForMailEventOptions, WaitForMailReturnType } from "./types"
 
-export default async function waitForMailEvent(options: {
-  maxWaitSeconds?: number
-  filter?: (msg: any) => boolean
-  region: string
-  moreData?: boolean
-}) {
+export default async function waitForMailEvent<T extends boolean = false>(
+  options?: WaitForMailEventOptions<T>,
+): Promise<WaitForMailReturnType<T>> {
   const mailConfig: Output = JSON.parse(
     readFileSync(path.join(os.tmpdir(), "catch.output.json"), "utf-8"),
   )
@@ -28,7 +25,7 @@ export default async function waitForMailEvent(options: {
 
   const client = new SQSClient({ region: mailConfig.region })
 
-  const timeout = options.maxWaitSeconds ?? 30
+  const timeout = options?.maxWaitSeconds || 30
   const start = Date.now()
 
   while ((Date.now() - start) / 1000 < timeout) {
@@ -50,9 +47,9 @@ export default async function waitForMailEvent(options: {
       )
 
       const parsed = JSON.parse(message.Body!)
-      if (!options.filter || options.filter(parsed)) {
+      if (!options?.filter || options.filter(parsed)) {
         const json = JSON.parse(parsed.Message)
-        if (options.moreData) return json
+        if (options?.moreData) return json
         else return json.mail.commonHeaders
       }
     }

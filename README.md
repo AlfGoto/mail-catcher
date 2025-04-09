@@ -1,79 +1,92 @@
 # Mail Catcher
 
-A simple module to test your AWS-CDK mail sending services. **Mail Catcher** sets up the necessary AWS resources to help you test your email sending flows via AWS SES, S3, SNS, SQS, and SSM.
-
-## Features
-
-- **Email Storage in S3:** Emails are stored in a dedicated S3 bucket.
-- **Notification System:** Uses SNS to publish notifications when emails arrive.
-- **SES Receipt Rule:** Configured to store emails in S3 and send SNS notifications.
-- **Queue Monitoring:** An SQS queue receives SNS messages, allowing you to monitor email events.
-- **Configuration Storage:** SSM Parameter Store is used to retain the SQS queue URL.
-- **Testing Utility:** Provides a helper (`waitForMailEvent`) to ease testing in your CDK stack.
+**Mail Catcher** is a utility for testing email flows in your AWS CDK projects. It sets up SES, S3, SQS, and SNS automatically, so you can focus on writing integration tests that validate email delivery.
 
 ## Installation
-
-Install the package via npm:
 
 ```bash
 npm install mail-catcher
 ```
 
+## Exports
+
+```ts
+import {
+  MailCatcher,
+  waitForMailEvent,
+  ComplexMailOutput,
+  SimpleMailOutput,
+} from "mail-catcher"
+```
+
 ## Usage
 
-### In a CDK Stack
+### 1. Add Mail Catcher to Your Stack
 
-To integrate **Mail Catcher** in your AWS CDK stack, import and instantiate it. Make sure to provide a verified SES email address as the recipient.
-
-```typescript
-import MailCatcher from 'mail-catcher';
-
-new MailCatcher(this, "MailCatcher", "contact@alfredgauthier.com");
+```ts
+new MailCatcher(this, "MailCatcher", "contact@yourdomain.com")
 ```
 
-> **Note:** The provided mail must be an approved email in SES.
+> The email must be verified in SES.
 
-### Testing Mail Events
+### 2. Basic Wait for an Email
 
-For testing, the package includes a utility function `waitForMailEvent` which polls the SQS queue for mail events.
+```ts
+const mailEvent = await waitForMailEvent()
+```
 
-```typescript
-import waitForMailEvent from 'mail-catcher/test-utils';
+### 3. Match Content in Your Emails
 
-const random = Math.random().toString();
-await fetch(apiUrl + random);
+Here we test an API that sends a custom object in the email subject:
+
+```ts
+const object = Math.random().toString()
+await fetch(apiUrl + object) // Trigger email sending with custom object
 
 const mailEvent = await waitForMailEvent({
-  maxWaitSeconds: 100,
-  region: "eu-central-1",
-});
+  maxWaitSeconds: 100, // 30 by default
+})
 
-expect(mailEvent.subject).toMatch(random);
+expect(mailEvent.subject).toMatch(object)
 ```
 
-## How It Works
+### 4. Filter on Email Content
 
-1. **Resource Setup:**
-   - **S3 Bucket:** Stores incoming emails with auto-deletion enabled upon stack removal.
-   - **SNS Topic:** Used to forward notifications from S3 and SES.
-   - **SES Receipt Rule Set:** Creates a rule that triggers on email receipt. The rule stores emails in S3 and sends notifications via SNS.
-   - **SQS Queue:** Subscribed to the SNS topic to process email notification messages.
-   - **SSM Parameter Store:** Persists the SQS queue URL for easy retrieval during testing.
+You can filter received messages with your own logic:
 
-2. **Custom Resource for SES Rule Set:**
-   - An AWS Custom Resource is used to activate or deactivate the SES rule set automatically during stack creation and deletion.
+```ts
+const mailEvent = await waitForMailEvent({
+  region: "eu-central-1",
+  filter: (msg) =>
+    JSON.parse(msg.Message).mail.commonHeaders.source ===
+    "contact@yourdomain.com",
+  // JSON.parse(msg.Message) is of type ComplexMailOutput
+})
+```
+>You should filter your mails
 
-3. **Testing Utility (`waitForMailEvent`):**
-   - This function retrieves the SQS queue URL from SSM, waits for incoming email messages, deletes the processed messages, and filters the content based on user-defined criteria.
+### 5. If You Need More Email Data
 
-## Repository
+```ts
+const mailEvent = await waitForMailEvent({
+  moreData: true,
+  region: "eu-central-1",
+})
+console.log(mailEvent.mail.source) // access full email object
+```
 
-For more details and to contribute, visit the [mail-catcher GitHub repository](https://github.com/AlfGoto/mail-catcher).
+You can use `ComplexMailOutput` and `SimpleMailOutput` for typing.
 
-## Author
+## Why Use It
 
-Created by **AlfGoto**.
+- No manual SES/S3/SQS setup.
+- Write reliable tests for email flows.
+- Validate real email content in CI.
+
+## GitHub
+
+[github.com/AlfGoto/mail-catcher](https://github.com/AlfGoto/mail-catcher)
 
 ## License
 
-This project is licensed under the ISC License. See the [LICENSE](./LICENSE) file for details.
+ISC
