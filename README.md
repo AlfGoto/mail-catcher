@@ -27,7 +27,7 @@ import {
 new MailCatcher(this, "MailCatcher", "contact@yourdomain.com")
 ```
 
-> The email must be verified in SES.
+> You must use a verified **DOMAIN** in SES
 
 ### 2. Basic Wait for an Email
 
