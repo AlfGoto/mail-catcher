@@ -1,0 +1,18 @@
+# Ignore source files
+src/
+tsconfig.json
+tsconfig.*.json
+
+# Ignore tests
+test/
+*.test.ts
+
+# Ignore dev stuff
+node_modules/
+*.log
+*.tsbuildinfo
+.vscode/
+.env*
+.DS_Store
+
+catch.output.json

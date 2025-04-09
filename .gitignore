@@ -1,0 +1,19 @@
+# Node
+node_modules/
+dist/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# IDEs / OS
+.vscode/
+.DS_Store
+
+catch.output.json
