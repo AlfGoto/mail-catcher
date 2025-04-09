@@ -25,8 +25,8 @@ jobs:
 
       - name: Install dependencies
         run: | 
-          npm install
           npm install typescript
+          npm install
 
       - name: Install semver package
         run: npm install semver
