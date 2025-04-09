@@ -23,23 +23,7 @@ export default class MailCatcher extends Construct {
   constructor(scope: Construct, id: string, mailAddress?: string) {
     super(scope, id)
 
-    const bucket = new s3.Bucket(this, "MailCatcherBucket", {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    })
-
     const topic = new sns.Topic(this, "MailCatcherTopic")
-
-    bucket.addToResourcePolicy(
-      new iam.PolicyStatement({
-        actions: ["s3:PutObject"],
-        resources: [bucket.arnForObjects("*")],
-        principals: [new iam.ServicePrincipal("ses.amazonaws.com")],
-        conditions: {
-          StringEquals: { "aws:SourceAccount": Stack.of(this).account },
-        },
-      }),
-    )
 
     const ruleSet = new ses.ReceiptRuleSet(this, "MailCatcherRuleSet", {
       receiptRuleSetName: "MailCatcherRuleSetName",
@@ -48,10 +32,6 @@ export default class MailCatcher extends Construct {
     ruleSet.addRule("StoreEmailsInS3", {
       recipients: mailAddress ? [mailAddress] : [],
       actions: [
-        new actions.S3({
-          bucket: bucket,
-          objectKeyPrefix: "emails/",
-        }),
         new actions.Sns({
           topic: topic,
         }),
@@ -84,7 +64,7 @@ export default class MailCatcher extends Construct {
       policy: cr.AwsCustomResourcePolicy.fromStatements([
         new iam.PolicyStatement({
           actions: ["ses:SetActiveReceiptRuleSet"],
-          resources: ["*"], // SES SetActiveReceiptRuleSet uses a wildcard for resources
+          resources: ["*"],
         }),
       ]),
     })
