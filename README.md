@@ -56,7 +56,6 @@ You can filter received messages with your own logic:
 
 ```ts
 const mailEvent = await waitForMailEvent({
-  region: "eu-central-1",
   filter: (msg) =>
     JSON.parse(msg.Message).mail.commonHeaders.source ===
     "contact@yourdomain.com",
@@ -70,7 +69,6 @@ const mailEvent = await waitForMailEvent({
 ```ts
 const mailEvent = await waitForMailEvent({
   moreData: true,
-  region: "eu-central-1",
 })
 console.log(mailEvent.mail.source) // access full email object
 ```
