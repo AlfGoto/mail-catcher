@@ -24,7 +24,9 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: npm install
+        run: | 
+          npm install
+          npm install typescript
 
       - name: Install semver package
         run: npm install semver
