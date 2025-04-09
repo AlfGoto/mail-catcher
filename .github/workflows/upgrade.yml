@@ -23,10 +23,11 @@ jobs:
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
 
+      - name: Install typescript
+        run: npm install typescript
+
       - name: Install dependencies
-        run: | 
-          npm install typescript
-          npm install
+        run: npm install
 
       - name: Install semver package
         run: npm install semver
