@@ -17,7 +17,7 @@ import { Output } from "./types"
 import * as actions from "aws-cdk-lib/aws-ses-actions"
 
 export default class MailCatcher extends Construct {
-  constructor(scope: Construct, id: string, mailAddress?: string) {
+  constructor(scope: Construct, id: string, mailAddress: string | string[]) {
     super(scope, id)
 
     const topic = new sns.Topic(this, "MailCatcherTopic")
@@ -26,8 +26,9 @@ export default class MailCatcher extends Construct {
       receiptRuleSetName: "MailCatcherRuleSetName",
     })
 
+    const rec = typeof mailAddress === "string" ? [mailAddress] : mailAddress
     ruleSet.addRule("StoreEmailsInS3", {
-      recipients: mailAddress ? [mailAddress] : [],
+      recipients: rec,
       actions: [
         new actions.Sns({
           topic: topic,
