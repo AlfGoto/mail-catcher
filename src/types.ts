@@ -42,10 +42,11 @@ export type ComplexMailOutput = {
   content: string
 }
 
-export type WaitForMailEventOptions<T> = {
-  maxWaitSeconds?: number
-  filter?: (msg: any) => boolean
-  moreData?: T
-}
+export type WaitForMailEventOptions<T extends boolean = false> = {
+  maxWaitSeconds?: number;
+  filter?: Partial<SimpleMailOutput>;
+  complexMode?: T;
+};
 
-export type WaitForMailReturnType<T> = T extends true ? ComplexMailOutput : SimpleMailOutput
+export type WaitForMailReturnType<T extends boolean> =
+  T extends true ? ComplexMailOutput : SimpleMailOutput;

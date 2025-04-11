@@ -1,6 +1,6 @@
 # Mail Catcher
 
-**Mail Catcher** is a utility for testing email flows in your AWS CDK projects. It sets up SES, S3, SQS, and SNS automatically, so you can focus on writing integration tests that validate email delivery.
+**Mail Catcher** is a utility for testing email flows in your AWS CDK projects. It sets up SES, SQS, and SNS automatically, so you can focus on writing integration tests that validate email delivery.
 
 ## Installation
 
@@ -56,10 +56,8 @@ You can filter received messages with your own logic:
 
 ```ts
 const mailEvent = await waitForMailEvent({
-  filter: (msg) =>
-    JSON.parse(msg.Message).mail.commonHeaders.source ===
-    "contact@yourdomain.com",
-  // JSON.parse(msg.Message) is of type ComplexMailOutput
+  filter: {subject: random},
+  // the object is of type ComplexMailOutput
 })
 ```
 >You should filter your mails
@@ -68,16 +66,16 @@ const mailEvent = await waitForMailEvent({
 
 ```ts
 const mailEvent = await waitForMailEvent({
-  moreData: true,
+  complexMode: true,
 })
-console.log(mailEvent.mail.source) // access full email object
+console.log(mailEvent) // access full email event object
 ```
 
 You can use `ComplexMailOutput` and `SimpleMailOutput` for typing.
 
 ## Why Use It
 
-- No manual SES/S3/SQS setup.
+- No manual SES/SQS setup.
 - Write reliable tests for email flows.
 - Validate real email content in CI.
 

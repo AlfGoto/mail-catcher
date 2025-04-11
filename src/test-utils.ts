@@ -7,26 +7,46 @@ import { readFileSync } from "fs"
 import path from "path"
 import os from "os"
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm"
-import { Output, WaitForMailEventOptions, WaitForMailReturnType } from "./types"
+import {
+  Output,
+  SimpleMailOutput,
+  WaitForMailEventOptions,
+  WaitForMailReturnType,
+} from "./types"
+
+function createFilter(
+  criteria: Partial<SimpleMailOutput>,
+): (msg: any) => boolean {
+  return (msg: any): boolean => {
+    if (!msg?.mail?.commonHeaders) return false
+    return Object.entries(criteria).every(
+      ([key, value]) =>
+        msg.mail.commonHeaders[key as keyof SimpleMailOutput] === value,
+    )
+  }
+}
 
 export default async function waitForMailEvent<T extends boolean = false>(
   options?: WaitForMailEventOptions<T>,
 ): Promise<WaitForMailReturnType<T>> {
-  const mailConfig: Output = JSON.parse(
-    readFileSync(path.join(os.tmpdir(), "catch.output.json"), "utf-8"),
-  )
+  const f = process.cwd().split("/")
+  const folderName = f[f.length - 1]
+  const fileLocation = path.join(os.tmpdir(), `${folderName}.catch.output.json`)
+  const mailConfig: Output = JSON.parse(readFileSync(fileLocation, "utf-8"))
 
-  const ssmClient = new SSMClient({
-    region: mailConfig.region,
-  })
+  const ssmClient = new SSMClient({ region: mailConfig.region })
   const command = new GetParameterCommand({ Name: mailConfig.ssmsqsqueue })
   const data = await ssmClient.send(command)
   const queueUrl = data.Parameter?.Value
+  if (!queueUrl) {
+    throw new Error("Queue URL not found in the parameter store")
+  }
 
   const client = new SQSClient({ region: mailConfig.region })
-
   const timeout = options?.maxWaitSeconds || 30
   const start = Date.now()
+
+  const filterFn = options?.filter ? createFilter(options.filter) : () => true
 
   while ((Date.now() - start) / 1000 < timeout) {
     const res = await client.send(
@@ -40,16 +60,17 @@ export default async function waitForMailEvent<T extends boolean = false>(
     if (res.Messages?.[0]) {
       const message = res.Messages[0]
       const parsed = JSON.parse(message.Body!)
-      if (!options?.filter || options.filter(parsed)) {
+      const innerMessage = JSON.parse(parsed.Message)
+
+      if (filterFn(innerMessage)) {
         await client.send(
           new DeleteMessageCommand({
             QueueUrl: queueUrl,
             ReceiptHandle: message.ReceiptHandle!,
           }),
         )
-        const json = JSON.parse(parsed.Message)
-        if (options?.moreData) return json
-        else return json.mail.commonHeaders
+        if (options?.complexMode) return innerMessage
+        else return innerMessage.mail.commonHeaders
       }
     }
   }

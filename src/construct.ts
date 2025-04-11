@@ -75,7 +75,7 @@ export default class MailCatcher extends Construct {
 
     ////////////////////////////////////////////////////////////////////
 
-    const ssmSqsName = "/mail-catcher/" + id + "/ssmsqsqueue"
+    const ssmSqsName = "/mail-catcher/" + scope.node.id + "/ssmsqsqueue"
     new ssm.StringParameter(this, "MailCatcherSsmSqsQueue", {
       parameterName: ssmSqsName,
       stringValue: testQueue.queueUrl,
@@ -87,7 +87,12 @@ export default class MailCatcher extends Construct {
       stackName: Stack.of(this).stackName,
     }
 
-    const filePath = path.join(os.tmpdir(), "catch.output.json")
-    fs.writeFileSync(filePath, JSON.stringify(output, null, 2))
+    const f = process.cwd().split("/")
+    const folderName = f[f.length - 1]
+    const fileLocation = path.join(
+      os.tmpdir(),
+      `${folderName}.catch.output.json`,
+    )
+    fs.writeFileSync(fileLocation, JSON.stringify(output, null, 2))
   }
 }
